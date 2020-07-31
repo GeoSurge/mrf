@@ -102,3 +102,12 @@ dist
 
 # TernJS port file
 .tern-port
+
+*.DS_Store
+*.jpg
+*.tif
+/data/*.xml
+/data/*.mrf
+/data/*.idx
+/data/*.lrc
+/data/*.bak
