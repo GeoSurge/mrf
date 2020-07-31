@@ -111,3 +111,4 @@ dist
 /data/*.idx
 /data/*.lrc
 /data/*.bak
+/src/*.bak
