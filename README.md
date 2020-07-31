@@ -1,3 +1,5 @@
+:warning: This package is a work in progress
+
 # mrf
 Read Meta Raster Format Files (e.g. .mrf, .idx, .lrc, .data)
 
