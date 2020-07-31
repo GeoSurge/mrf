@@ -103,6 +103,7 @@ dist
 # TernJS port file
 .tern-port
 
+*.bak
 *.DS_Store
 *.jpg
 *.tif
