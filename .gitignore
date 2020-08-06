@@ -119,3 +119,4 @@ dist
 /data/*.tif
 /data/*.xml
 /src/*.bak
+/tests/*.txt
