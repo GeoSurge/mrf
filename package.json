@@ -29,7 +29,7 @@
     "lint": "node ./node_modules/eslint/bin/eslint.js src",
     "fix": "node ./node_modules/eslint/bin/eslint.js src --fix",
     "postinstall": "sh fix-broken-esri-package.sh",
-    "test": "ava --verbose tests/test*.js"
+    "test": "source .env && AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY ava --verbose tests/test*.js"
   },
   "repository": {
     "type": "git",
