@@ -104,12 +104,17 @@ dist
 .tern-port
 
 *.bak
+*.csv
 *.DS_Store
 *.jpg
+*.png
 *.tif
 /data/*.xml
 /data/*.mrf
 /data/*.idx
 /data/*.lrc
 /data/*.bak
+/data/*.png
+/data/*.jpg
+/data/*.tif
 /src/*.bak
