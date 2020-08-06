@@ -105,11 +105,11 @@ dist
 
 *.bak
 *.csv
+*.mrf
 *.DS_Store
 *.jpg
 *.png
 *.tif
-/data/*.xml
 /data/*.mrf
 /data/*.idx
 /data/*.lrc
@@ -117,4 +117,5 @@ dist
 /data/*.png
 /data/*.jpg
 /data/*.tif
+/data/*.xml
 /src/*.bak
