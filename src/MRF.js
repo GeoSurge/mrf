@@ -1,6 +1,5 @@
 const fetch = require('cross-fetch');
 const Lerc = require("lerc");
-const hasha = require("hasha");
 const groupBy = require('lodash.groupBy');
 
 const cluster = require('./cluster');
@@ -310,8 +309,8 @@ class MRF {
 
             // check if datatiles have the same data
             // indicating an issue with fetching
-            if (debug && hasha) {
-                const uniques = new Set(datatiles.map(t => hasha(new DataView(t.data)))).size;
+            if (debug && typeof hash32 !== 'undefined') {
+                const uniques = new Set(datatiles.map(t => hash32(new DataView(t.data)))).size;
                 if (uniques !== datatiles.length) {
                     if (debug) console.log("[mrf.getTiles] datatiles.length:", datatiles.length);
                     if (debug) console.log("[mrf.getTiles] uniques:", uniques);
