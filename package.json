@@ -1,6 +1,6 @@
 {
   "name": "mrf",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Read Meta Raster Format Files (e.g. .mrf, .idx, .data)",
   "main": "src/",
   "dependencies": {

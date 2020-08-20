@@ -1,4 +1,4 @@
-const fetch = require('cross-fetch');
+const crossFetch = require('cross-fetch');
 const Lerc = require("lerc");
 const groupBy = require('lodash.groupBy');
 
@@ -17,6 +17,7 @@ class MRF {
         mrf_xml,
         idx_buffer,
         data_buffer,
+        fetch: inputFetch,
 
         strict = false
     } = {}) {
@@ -24,8 +25,10 @@ class MRF {
         this.strict = strict;
         this.data_url = data_url;
 
+        this.fetch = inputFetch || crossFetch;
+
         if (mrf_url) {
-            this.metadata = fetch(mrf_url).then(response => response.text()).then(parseMRF);
+            this.metadata = this.fetch(mrf_url).then(response => response.text()).then(parseMRF);
         } else if (mrf_xml) {
             this.metadata = Promise.resolve(parseMRF(mrf_xml));
         } else {
@@ -33,7 +36,7 @@ class MRF {
         }
 
         if (idx_url) {
-            this.idx = fetch(idx_url).then(response => response.arrayBuffer()).then(parseIDX);
+            this.idx = this.fetch(idx_url).then(response => response.arrayBuffer()).then(parseIDX);
         } else if (idx_buffer) {
             this.idx = Promise.resolve(parseIDX(idx_buffer));
         } else {
@@ -216,7 +219,7 @@ class MRF {
             // aws s3 supports byte range requets,
             // but sometimes doesn't send Accept-Ranges header
             if (!this.data_url.includes('.amazonaws.')) {
-                const head = await fetch(this.data_url, { method: 'HEAD' });
+                const head = await this.fetch(this.data_url, { method: 'HEAD' });
                 const header = head.headers.get('Accept-Ranges') || head.headers.get('accept-ranges');
 
                 // we run toString in case it's an array of one
@@ -227,7 +230,7 @@ class MRF {
             }
 
             const headers = { Range: `bytes=${range.start}-${range.end}` };
-            const response = await fetch(this.data_url, { headers });
+            const response = await this.fetch(this.data_url, { headers });
             const arrayBuffer = await response.arrayBuffer();
             if (debug && Math.abs(arrayBuffer.byteLength - (range.end - range.start)) > 1) {
                 console.log("arrayBuffer.byteLength:", arrayBuffer.byteLength);
