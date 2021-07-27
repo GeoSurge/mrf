@@ -85,7 +85,7 @@ result is a JSON serializable object that looks like the following:
   ]
 }
 ```
-There are other properties available that deal with time and build options.  Please see the [examples]().
+There are other properties available that deal with time and build options.  Please see the [examples](https://github.com/GeoSurge/mrf/tree/master/examples).
 
 ## parsing .idx files
 Index files list the offset and length of each tile in binary format.  You can parse this information like so:
