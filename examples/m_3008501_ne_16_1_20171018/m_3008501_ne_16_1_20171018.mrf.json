@@ -1,0 +1,78 @@
+{
+  "area": 50362506,
+  "height": 7587,
+  "width": 6638,
+  "depth": 1,
+  "numBands": 4,
+  "pageHeight": 512,
+  "pageWidth": 512,
+  "pageDepth": 1,
+  "pageBands": 1,
+  "compression": "LERC",
+  "rsets": {
+    "model": "uniform",
+    "scale": 2
+  },
+  "xmin": 601135,
+  "ymin": 3422859,
+  "xmax": 607773,
+  "ymax": 3430446,
+  "projection": "PROJCS[\"NAD83 / UTM zone 16N\",GEOGCS[\"NAD83\",DATUM[\"North_American_1983\",SPHEROID[\"GRS 1980\",6378137,298.2572221010042,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4269\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-87],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"26916\"]]",
+  "order": "band",
+  "overviews": [
+    {
+      "height": 3794,
+      "heightInPages": 8,
+      "pages": 224,
+      "offset": 780,
+      "width": 3319,
+      "widthInPages": 7,
+      "scale": {
+        "height": 1.999736425935688,
+        "width": 2
+      }
+    },
+    {
+      "height": 1897,
+      "heightInPages": 4,
+      "pages": 64,
+      "offset": 1004,
+      "width": 1660,
+      "widthInPages": 4,
+      "scale": {
+        "height": 3.999472851871376,
+        "width": 3.9987951807228916
+      }
+    },
+    {
+      "height": 949,
+      "heightInPages": 2,
+      "pages": 16,
+      "offset": 1068,
+      "width": 830,
+      "widthInPages": 2,
+      "scale": {
+        "height": 7.994731296101159,
+        "width": 7.997590361445783
+      }
+    },
+    {
+      "height": 475,
+      "heightInPages": 1,
+      "pages": 4,
+      "offset": 1084,
+      "width": 415,
+      "widthInPages": 1,
+      "scale": {
+        "height": 15.972631578947368,
+        "width": 15.995180722891567
+      }
+    }
+  ],
+  "options": [
+    "LERC_PREC=0.5",
+    "V2=ON"
+  ],
+  "widthInTiles": 13,
+  "heightInTiles": 15
+}

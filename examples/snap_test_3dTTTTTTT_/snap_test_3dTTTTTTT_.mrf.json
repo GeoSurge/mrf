@@ -1,0 +1,91 @@
+{
+  "area": 33554432,
+  "height": 4096,
+  "width": 8192,
+  "depth": 1,
+  "numBands": 3,
+  "pageHeight": 512,
+  "pageWidth": 512,
+  "pageDepth": 1,
+  "pageBands": 3,
+  "compression": "JPEG",
+  "quality": 80,
+  "rsets": {
+    "model": "uniform",
+    "scale": 2,
+    "dataFileName": "{cache_path}/snap_test_3d/snap_test_3dTTTTTTT_.pjg",
+    "indexFileName": "{cache_path}/snap_test_3d/snap_test_3dTTTTTTT_.idx"
+  },
+  "xmin": -180,
+  "ymin": -90,
+  "xmax": 180,
+  "ymax": 90,
+  "projection": "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]",
+  "twms": {
+    "levels": 3,
+    "empty": {
+      "offset": 0
+    },
+    "patterns": [
+      "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=snap_test_3d&STYLE=(default)?&TILEMATRIXSET=EPSG4326_16km&TILEMATRIX=[0-9]*&TILEROW=[0-9]*&TILECOL=[0-9]*&FORMAT=image%2Fjpeg"
+    ],
+    "time": {
+      "start": "2010-01-01",
+      "end": "2012-03-11",
+      "periodicity": "P8D"
+    }
+  },
+  "order": "pixel",
+  "overviews": [
+    {
+      "height": 2048,
+      "heightInPages": 4,
+      "pages": 32,
+      "offset": 128,
+      "width": 4096,
+      "widthInPages": 8,
+      "scale": {
+        "height": 2,
+        "width": 2
+      }
+    },
+    {
+      "height": 1024,
+      "heightInPages": 2,
+      "pages": 8,
+      "offset": 160,
+      "width": 2048,
+      "widthInPages": 4,
+      "scale": {
+        "height": 4,
+        "width": 4
+      }
+    },
+    {
+      "height": 512,
+      "heightInPages": 1,
+      "pages": 2,
+      "offset": 168,
+      "width": 1024,
+      "widthInPages": 2,
+      "scale": {
+        "height": 8,
+        "width": 8
+      }
+    },
+    {
+      "height": 256,
+      "heightInPages": 1,
+      "pages": 1,
+      "offset": 170,
+      "width": 512,
+      "widthInPages": 1,
+      "scale": {
+        "height": 16,
+        "width": 16
+      }
+    }
+  ],
+  "widthInTiles": 16,
+  "heightInTiles": 8
+}

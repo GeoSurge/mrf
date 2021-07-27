@@ -1,0 +1,80 @@
+{
+  "area": 3276800,
+  "height": 1280,
+  "width": 2560,
+  "depth": 1,
+  "numBands": 3,
+  "pageHeight": 512,
+  "pageWidth": 512,
+  "pageDepth": 1,
+  "pageBands": 3,
+  "noDataValue": 0,
+  "compression": "JPEG",
+  "quality": 80,
+  "rsets": {
+    "model": "uniform",
+    "scale": 2,
+    "dataFileName": "{cache_path}/test_weekly_jpg/YYYY/test_weekly_jpgTTTTTTT_.pjg",
+    "indexFileName": "{cache_path}/test_weekly_jpg/YYYY/test_weekly_jpgTTTTTTT_.idx"
+  },
+  "xmin": -180,
+  "ymin": -90,
+  "xmax": 180,
+  "ymax": 90,
+  "projection": "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]",
+  "twms": {
+    "levels": 3,
+    "empty": {
+      "offset": 0
+    },
+    "patterns": [
+      "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=test_weekly_jpg&STYLE=(default)?&TILEMATRIXSET=EPSG4326_16km&TILEMATRIX=[0-9]*&TILEROW=[0-9]*&TILECOL=[0-9]*&FORMAT=image%2Fjpeg"
+    ],
+    "time": {
+      "start": "2012-02-22",
+      "end": "2012-02-29",
+      "periodicity": "P7D"
+    }
+  },
+  "order": "pixel",
+  "overviews": [
+    {
+      "height": 640,
+      "heightInPages": 2,
+      "pages": 6,
+      "offset": 15,
+      "width": 1280,
+      "widthInPages": 3,
+      "scale": {
+        "height": 2,
+        "width": 2
+      }
+    },
+    {
+      "height": 320,
+      "heightInPages": 1,
+      "pages": 2,
+      "offset": 21,
+      "width": 640,
+      "widthInPages": 2,
+      "scale": {
+        "height": 4,
+        "width": 4
+      }
+    },
+    {
+      "height": 160,
+      "heightInPages": 1,
+      "pages": 1,
+      "offset": 23,
+      "width": 320,
+      "widthInPages": 1,
+      "scale": {
+        "height": 8,
+        "width": 8
+      }
+    }
+  ],
+  "widthInTiles": 5,
+  "heightInTiles": 3
+}
