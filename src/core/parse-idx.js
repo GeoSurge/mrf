@@ -1,26 +1,19 @@
 const binarize = require("fast-bin/binarize");
+const isBuffer = require("../utils/is-buffer");
 
 const MAX_SAFE_BITS = 64 - 53;
 
 const parseInteger = bits => {
   const i = bits.indexOf("1");
   if (i >= 0 && i < MAX_SAFE_BITS) {
-    console.warn(
-      `[mrf] cannot reliably parse: "${bits}" to an integer because it uses more than ${MAX_SAFE_BITS} bits.`
-    );
+    console.warn(`[mrf] cannot reliably parse: "${bits}" to an integer because it uses more than ${MAX_SAFE_BITS} bits.`);
   }
   return Number.parseInt(bits, 2);
 };
 
-module.exports = (input, { debug = false } = { debug: false }) => {
-  if (
-    input instanceof ArrayBuffer ||
-    (typeof Buffer !== "undefined" && Buffer.isBuffer(input))
-  ) {
-    input = new Uint8Array(input);
-  }
-
-  if (input instanceof ArrayBuffer) {
+module.exports = function parseIDX(input, { debug = false } = { debug: false }) {
+  if (input instanceof ArrayBuffer || isBuffer(input)) {
+    if (debug) console.log("[mrf] input to parseIDX is an ArrayBuffer or a Buffer");
     input = new Uint8Array(input);
   }
 
@@ -30,16 +23,6 @@ module.exports = (input, { debug = false } = { debug: false }) => {
   // convert 8-bit numbers to bit string like '000001010011100...'
   const { data: bits } = binarize({ data: nums, nbits: 8 });
 
-  // if (debug) {
-  //   // Print out chunked result
-  //   let chunked = '';
-  //   for (let i = 0; i < bits.length; i += 64) {
-  //     chunked += bits.slice(i, i + 64) + '\n';
-  //   }
-  //   console.log("chunked:");
-  //   console.log(chunked);
-  // }
-
   const results = [];
   const nbits = 64;
   for (let i = 0; i < bits.length; i += nbits * 2) {
@@ -48,7 +31,6 @@ module.exports = (input, { debug = false } = { debug: false }) => {
     results.push({ offset, length });
   }
 
-  // console.log("results:", results);
-  // console.log("results.length:", results.length);
+  if (debug) console.log("[mrf] parseIDX will return the following results:\n", results);
   return results;
 };

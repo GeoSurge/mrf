@@ -1,6 +1,6 @@
 const fs = require("fs");
 const test = require("flug");
-const parseMRF = require("../src/core/parseMRF");
+const parseMRF = require("../src/core/parse-mrf");
 
 const getDirectories = source =>
   fs
@@ -16,8 +16,7 @@ test("examples", ({ eq }) => {
     const mrf = fs.readFileSync(mrfpath);
     const jsonpath = mrfpath + ".json";
     const parsed = parseMRF(mrf);
-    if (!fs.existsSync(jsonpath))
-      fs.writeFileSync(jsonpath, JSON.stringify(parsed, undefined, 2));
+    if (!fs.existsSync(jsonpath)) fs.writeFileSync(jsonpath, JSON.stringify(parsed, undefined, 2));
     const obj = JSON.parse(fs.readFileSync(jsonpath, "utf-8"));
     eq(parsed, obj);
   });
