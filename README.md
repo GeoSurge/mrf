@@ -1,4 +1,4 @@
-# mrf
+# mrf: beta
 Read Meta Raster Format Files (e.g. .mrf, .idx, .lrc, .data)
 
 # install
