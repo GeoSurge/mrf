@@ -112,3 +112,4 @@ result is an array of objects that looks like the following:
 # References:
 - [Meta Raster Format (MRF) User Guide](https://github.com/nasa-gibs/mrf/blob/master/doc/MUG.md)
 - [MRF WMS Client Mini Driver for GDAL](https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/minidriver_mrf.cpp)
+- [Cloud Optimized GeoTIFF vs the Meta Raster Format](https://medium.com/element84/cloud-optimized-geotiff-vs-the-meta-raster-format-d24c1a77dc2e)
