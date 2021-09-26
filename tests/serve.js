@@ -12,4 +12,6 @@ module.exports = port => {
   });
 
   server.listen(port);
+
+  return server;
 };

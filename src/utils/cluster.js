@@ -2,7 +2,7 @@
 // matches them into groups if share an integer boundary
 // one begins where the other ends and vice versa
 
-function cluster (objs) {
+function cluster(objs) {
   // sort objects in case they are not already sorted
   objs = Array.from(objs).sort((a, b) => Math.sign(a.end - b.end));
 
@@ -22,6 +22,6 @@ function cluster (objs) {
     }
   }
   return ranges;
-};
+}
 
 module.exports = cluster;
