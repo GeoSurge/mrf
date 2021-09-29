@@ -3,6 +3,10 @@ const Lerc = require("lerc");
 const groupBy = require("lodash.groupBy");
 const acceptRanges = require("accept-ranges");
 const xdim = require("xdim");
+const geowarp = require("geowarp");
+const typedArrayRanges = require("typed-array-ranges");
+
+const hash = require("./utils/hash");
 
 const cluster = require("./utils/cluster");
 const isdef = require("./utils/isdef");
@@ -96,34 +100,45 @@ class MRF {
     return `b:${tile.b}  l:${tile.l}  x:${tile.x}  y:${tile.y}`;
   }
 
+  /**
+   *
+   * @param {Array.<number>} bands - array of band indexes to get
+   * @param {number} bottom - how much to skip/take off from the bottom
+   * @param {boolean} debug - log intermediate values
+   * @param {number} height - requested output height
+   * @param {string} layout - layout of output data in xdim format (https://github.com/danieljdufour/xdim)
+   * @param {number} left - how much to skip/take off from the left
+   * @param {number} method - resampling method to use. see https://github.com/danieljdufour/geowarp
+   * @param {boolean} overview - use overview with resolution same or higher than requested area
+   * @param {boolean} round - round output pixel values to closest integer
+   * @param {number} right - how much to skip/take off from the right
+   * @param {number} top - how much to skip/take off from the top
+   * @param {number} width - requested output width
+   * @returns
+   */
   async getValues({
     debug,
-
-    // how much to skip/take off from the top
-    top,
-
-    // how much to skip/take off from the left
-    left,
-
-    // layout of output data in xdim format
-    // https://github.com/danieljdufour/xdim
-    layout = "[band][row][column]",
-
-    // how much to skip/take off from the bottom
+    bands,
     bottom,
-
-    // how much to skip/take off from the right
+    height,
+    layout = "[band][row][column]",
+    left,
+    method = "median",
+    overview: use_overview = true,
+    round,
+    theoretical_min,
+    theoretical_max,
+    top,
     right,
-
-    // requested output width
-    width,
-
-    // requested output height
-    height
+    width
   } = {}) {
-    if (debug) console.log("[mrf] starting getValues with:\n" + JSON.stringify(arguments, undefined, 2));
+    if (debug) console.log("[mrf] starting getValues with:\n" + JSON.stringify(Object.values(arguments), undefined, 2));
 
     const meta = await this.meta;
+
+    if (!bands) bands = range(meta.numBands);
+
+    const numBands = bands.length;
 
     if (!isdef(bottom)) bottom = 0;
     if (!isdef(left)) left = 0;
@@ -156,7 +171,7 @@ class MRF {
     if (debug) console.log("[mrf.getValues] ratio of real height to the requested height:", requestedScaleHeight);
 
     // want to choose lowest resolution that isn't coarser that the requested
-    let selection = {
+    let level = {
       index: 0,
       height: meta.height,
       width: meta.width,
@@ -165,53 +180,81 @@ class MRF {
         width: 1
       }
     };
-    if (debug) console.log("[mrf] meta.overviews:", meta.overviews);
-    for (let i = 0; i < meta.overviews.length; i++) {
-      const ovr = meta.overviews[i];
-      if (ovr.scale.height <= requestedScaleHeight && ovr.scale.width <= requestedScaleWidth) {
-        selection = { index: i + 1, ...ovr };
-      } else {
-        break;
+
+    if (use_overview) {
+      if (debug) console.log("[mrf] meta.overviews:", meta.overviews);
+      for (let i = 0; i < meta.overviews.length; i++) {
+        const ovr = meta.overviews[i];
+        if (ovr.scale.height <= requestedScaleHeight && ovr.scale.width <= requestedScaleWidth) {
+          level = { index: i + 1, ...ovr };
+        } else {
+          break;
+        }
       }
+      if (debug) console.log("[mrf.getValues] selected overview level:", level);
     }
-    if (debug) console.log("[mrf.getValues] selected overview level:", selection);
 
     // percentage of selected height from top to skip
-    const scaledTop = top / selection.scale.height;
+    const scaledTop = top / level.scale.height;
     if (debug) console.log("[mrf.getValues] scaledTop:", scaledTop);
 
-    const scaledBottom = bottom / selection.scale.height;
+    const scaledBottom = bottom / level.scale.height;
     if (debug) console.log("[mrf.getValues] scaledBottom:", scaledBottom);
 
-    const scaledLeft = left / selection.scale.width;
+    const scaledLeft = left / level.scale.width;
     if (debug) console.log("[mrf.getValues] scaledLeft:", scaledLeft);
 
-    const scaledRight = right / selection.scale.width;
+    const scaledRight = right / level.scale.width;
     if (debug) console.log("[mrf.getValues] scaledRight:", scaledRight);
 
     const tileMinX = Math.floor(scaledLeft / meta.pageWidth);
     if (debug) console.log("[mrf.getValues] tileMinX:", tileMinX);
 
-    // shouldn't this be Math.ceil so we don't miss any pixels?
-    // or maybe this is the index number??
-    const tileMaxX = Math.floor((selection.width - scaledRight) / meta.pageWidth);
+    // tileMaxX is the index number (zero-index) of column in tile
+    const tileMaxX = Math.floor((level.width - scaledRight) / meta.pageWidth);
     if (debug) console.log("[mrf.getValues] tileMaxX:", tileMaxX);
 
     const tileMinY = Math.floor(scaledTop / meta.pageHeight);
     if (debug) console.log("[mrf.getValues] tileMinY:", tileMinY);
 
-    const tileMaxY = Math.floor((selection.height - scaledBottom) / meta.pageHeight);
+    const tileMaxY = Math.floor((level.height - scaledBottom) / meta.pageHeight);
     if (debug) console.log("[mrf.getValues] tileMaxY:", tileMaxY);
 
     const coords = [];
     for (let x = tileMinX; x <= tileMaxX; x++) {
       for (let y = tileMinY; y <= tileMaxY; y++) {
-        coords.push({ l: selection.index, x, y });
+        coords.push({ l: level.index, x, y });
       }
     }
 
-    const tiles = await this.getMultiBandTiles({ coords, debug });
+    const tiles = await this.getMultiBandTiles({ bands, coords, debug });
     if (debug) console.log("[mrf.getValues] got multiband tiles");
+
+    if (!isdef(theoretical_min) || !isdef(theoretical_max)) {
+      const setOfPixelTypes = new Set();
+      tiles.forEach(tile => {
+        tile.pixelTypes.forEach(pixelType => {
+          setOfPixelTypes.add(pixelType);
+        });
+      });
+
+      if (setOfPixelTypes.size === 1) {
+        const pixelType = Array.from(setOfPixelTypes)[0];
+
+        let typedArrayName;
+        if (pixelType === "U8") typedArrayName = "Uint8Array";
+        else if (pixelType === "S8") typedArrayName = "Int8Array";
+        else if (pixelType === "U16") typedArrayName = "Uint16Array";
+        else if (pixelType === "S16") typedArrayName = "Int16Array";
+        else if (pixelType === "U32") typedArrayName = "Uint32Array";
+        else if (pixelType === "S32") typedArrayName = "Int32Array";
+        else if (pixelType === "F32") typedArrayName = "Float32Array";
+
+        const [min, max] = typedArrayRanges.getRange(typedArrayName);
+        if (!isdef(theoretical_min)) theoretical_min = min;
+        if (!isdef(theoretical_max)) theoretical_max = max;
+      }
+    }
 
     // reformatting tile array into an index to make quicker look ups
     const tileIndex = {};
@@ -224,67 +267,87 @@ class MRF {
     const noDataValue = meta.noDataValue ?? null;
     if (debug) console.log("[mrf.getValues] noDataValue:", noDataValue);
 
-    // copy values from tiles into the output array
-    // assuming using all bands at the moment
-    // const bands = range(meta.numBands).map(b => range(requestedHeight).map(r => new Array(requestedWidth).fill(noDataValue)));
-    const out_sizes = { band: meta.numBands, row: requestedHeight, column: requestedWidth };
-    const { data: out_data } = xdim.prepareData({ fill: noDataValue, layout, sizes: out_sizes });
-    const update = xdim.prepareUpdate({ data: out_data, layout, sizes: out_sizes });
+    const scaledTopSnapped = Math.floor(scaledTop);
+    const scaledBottomSnapped = Math.floor(scaledBottom);
+    const scaledLeftSnapped = Math.floor(scaledLeft);
+    const scaledRightSnapped = Math.floor(scaledRight);
+    const scaledHeightSnapped = level.height - scaledTopSnapped - scaledBottomSnapped;
+    const scaledWidthSnapped = level.width - scaledLeftSnapped - scaledRightSnapped;
 
-    const heightInLevelPixels = selection.height - (scaledTop + scaledBottom);
-    if (debug) console.log("heightInLevelPixels:", heightInLevelPixels);
+    const sizesClipped = { band: bands.length, row: scaledHeightSnapped, column: scaledWidthSnapped };
+    const { data: dataClipped } = xdim.prepareData({ fill: noDataValue, layout, sizes: sizesClipped });
+    const updateLevelClipping = xdim.prepareUpdate({ data: dataClipped, layout, sizes: sizesClipped });
 
-    const widthInLevelPixels = selection.width - (scaledLeft + scaledRight);
-    if (debug) console.log("widthInLevelPixels:", widthInLevelPixels);
+    const { pageHeight: tileHeight, pageWidth: tileWidth } = meta;
 
-    const heightScaleRelativeToLevelPixels = heightInLevelPixels / requestedHeight;
-    if (debug) console.log("heightScaleRelativeToLevelPixels:", heightScaleRelativeToLevelPixels);
+    if (debug) console.time("collecting");
+    // assuming pixels from getMultiBandTiles is [band][row,column]
+    for (let b = 0; b < numBands; b++) {
+      for (let y = scaledTopSnapped; y < level.height - scaledBottomSnapped; y++) {
+        // how many tiles from the top
+        // const tileY = Math.floor(y / level.height);
+        const tileY = Math.floor(y / tileHeight);
+        // if (debug) console.log("tileY:", {y, lh: level.height, tileY });
 
-    const widthScaleRelativeToLevelPixels = widthInLevelPixels / requestedWidth;
-    if (debug) console.log("widthScaleRelativeToLevelPixels:", widthScaleRelativeToLevelPixels);
+        // within the tile, how many pixels from the top
+        const rowInTile = y % tileHeight;
 
-    // don't want to iterate though tiles because our method of sampling
-    // is iterating through samples and selecting correct tile for each sample
-    if (debug) console.log("[mrf.getValues] requestedHeight:", requestedHeight);
-    for (let rowIndex = 0; rowIndex < requestedHeight; rowIndex++) {
-      const yInLevelPixels = scaledTop + rowIndex * heightScaleRelativeToLevelPixels;
+        const tileRowFromCache = tileIndex[tileY];
+        // console.log("tileRowFromCache:", tileRowFromCache);
 
-      const tileY = Math.floor(yInLevelPixels / meta.pageHeight);
-      if (debug) console.log("tileY:", tileY);
+        const rowOffset = rowInTile * tileWidth;
 
-      const yInTilePixels = Math.round(yInLevelPixels % meta.pageHeight);
-      if (debug) console.log("[mrf] yInTilePixels:", yInTilePixels);
+        for (let x = scaledLeftSnapped; x < level.width - scaledRightSnapped; x++) {
+          const tileX = Math.floor(x / tileWidth);
+          const colInTile = x % tileWidth;
+          const tile = tileRowFromCache[tileX];
 
-      for (let columnIndex = 0; columnIndex < requestedWidth; columnIndex++) {
-        const xInLevelPixels = scaledLeft + columnIndex * widthScaleRelativeToLevelPixels;
-
-        const tileX = Math.floor(xInLevelPixels / meta.pageWidth);
-
-        const tile = tileIndex[tileY][tileX];
-        if (!tile) {
-          console.error("tileIndex:", tileIndex);
-          throw `Uh Oh. Couldn't find tile at x:${tileX} and y:${tileY} with tileIndex:`;
-        }
-
-        // how many pixels into the image is the offset
-        // assuming row-major order
-        const pixelOffset = yInTilePixels * tile.width;
-
-        const xInTilePixels = Math.round(xInLevelPixels % meta.pageWidth);
-
-        const pixelIndex = pixelOffset + xInTilePixels;
-
-        // pull out values from tile
-        for (let bandIndex = 0; bandIndex < meta.numBands; bandIndex++) {
-          // bands[bandIndex][rowIndex][columnIndex] = tile.pixels[bandIndex][pixelIndex];
-          update({
-            point: { band: bandIndex, row: rowIndex, column: columnIndex },
-            value: tile.pixels[bandIndex][pixelIndex]
-          });
+          // assuming pixels are in [row,column,band] layout
+          const value = tile.pixels[b][rowOffset + colInTile];
+          try {
+            updateLevelClipping({
+              point: { band: b, row: y - scaledTopSnapped, column: x - scaledLeftSnapped },
+              value
+            });
+          } catch (error) {
+            throw error;
+          }
         }
       }
     }
-    if (debug) console.log("[mrf.getValues] finished tiles");
+    if (debug) console.timeEnd("collecting");
+
+    // use geowarp to sample values into correct frame
+    const bbox = [
+      scaledLeftSnapped * level.scale.width, // xmin
+      scaledBottomSnapped * level.scale.height, // ymin
+      meta.width - scaledRightSnapped * level.scale.width, // xmax
+      meta.height - scaledTopSnapped * level.scale.height // ymax
+    ];
+    if (debug) console.log("bbox:", bbox);
+
+    if (debug) console.time("geowarping");
+    const { data: out_data } = geowarp({
+      debug_level: debug ? 1 : 0,
+      in_data: dataClipped,
+      in_bbox: bbox,
+      in_layout: layout,
+      in_height: scaledHeightSnapped,
+      in_width: scaledWidthSnapped,
+      in_no_data: noDataValue,
+      out_bbox: bbox,
+      out_layout: layout,
+      out_width: width,
+      out_height: requestedHeight,
+      out_width: requestedWidth,
+      method,
+      round,
+      theoretical_min,
+      theoretical_max
+    });
+    if (debug) console.timeEnd("geowarping");
+
+    if (debug) console.log("[mrf] finished getting values");
 
     return { data: out_data };
   }
@@ -502,9 +565,10 @@ class MRF {
         );
 
         clustersWithData.forEach(range => {
+          // double making sure tiles are sorted correctly
+          range.objs.sort((a, b) => Math.sign(a.start - b.start));
+
           range.objs.forEach((tile, i) => {
-            // assuming that range.objs is sorted by start position
-            // which is a good assumption to make
             // tile.length is inclusive, e.g. length of 11 for [0,10]
             const offset = range.objs.slice(0, i).reduce((total, tile) => total + tile.length, 0);
 
@@ -519,8 +583,8 @@ class MRF {
 
       // check if tiles have the same data
       // indicating an issue with fetching
-      if (debug && typeof hash32 !== "undefined") {
-        const uniques = new Set(tiles.map(t => hash32(new DataView(t.data)))).size;
+      if (debug) {
+        const uniques = new Set(tiles.map(t => hash(new DataView(t.data)))).size;
         if (uniques !== tiles.length) {
           if (debug) console.warn(`[mrf] uh oh.  we have ${tiles.length} tiles, but only ${uniques} unique array buffers.`);
         }
@@ -556,7 +620,8 @@ class MRF {
               tile.area = height * width;
               tile.height = height;
               tile.mask = mask;
-              (tile.layout = "[row,column,band]"), (tile.pixels = pixels[0]); // assuming only one band
+              tile.layout = "[row,column,band]";
+              tile.pixels = pixels[0]; // assuming only one band
               tile.pixelType = pixelType;
               tile.stats = statistics;
               tile.width = width;
@@ -568,7 +633,15 @@ class MRF {
           }
         });
       }
-      if (debug) console.log("[mrf.getTiles] finished decoding tiles", tiles);
+
+      if (debug) {
+        const uniques = new Set(tiles.map(t => hash(t.pixels))).size;
+        if (uniques !== tiles.length) {
+          if (debug) console.warn(`[mrf] uh oh.  we have ${tiles.length} tiles, but only ${uniques} unique pixel sets.`);
+        }
+      }
+
+      if (debug) console.log("[mrf.getTiles] finished decoding tiles", tiles[0]);
       return tiles;
     } catch (error) {
       console.error(error);
@@ -629,12 +702,12 @@ class MRF {
     });
 
     const tilesXYB = await this.getTiles({ coords: coordsXYB, debug });
-    if (debug) console.log("tilesXYB:", tilesXYB);
+    if (debug) console.log("tilesXYB:", tilesXYB.slice(0, 5));
 
     // merge tiles back into multi-band tiles
     // can probably group using Map in the future
     const groups = groupBy(tilesXYB, t => [t.l, t.x, t.y]);
-    if (debug) console.log("groups:", groups);
+    if (debug) console.log("groups:", Object.keys(groups));
 
     const tilesXY = [];
     for (const [lxy, group] of Object.entries(groups)) {
@@ -657,8 +730,19 @@ class MRF {
         layout: "[band][row,column]",
         y,
         pixels,
+        pixelTypes: group.map(tile => tile.pixelType), // assuming in right band order
+        stats: group.map(tile => tile.stats),
         width: group[0].width
       });
+    }
+
+    if (debug) {
+      if (debug) {
+        const uniques = new Set(tilesXY.map(t => hash(t.pixels.map(band => hash(band)).join(",")))).size;
+        if (uniques !== tilesXY.length) {
+          if (debug) console.warn(`[mrf] uh oh.  we have ${tilesXY.length} MultiBand Tiles, but only ${uniques} uniques.`);
+        }
+      }
     }
 
     return tilesXY;
