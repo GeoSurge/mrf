@@ -88,7 +88,6 @@ test("getting tiles", async ({ eq }) => {
   tiles.forEach(t => {
     writeImageToDisk({ data: range(3).map(() => t.pixels), height: t.height, width: t.width }, `test-gray-b${t.b}-x${t.x}-y${t.y}.jpg`);
   });
-  passed++;
 
   const firstTileWithoutPixels = tiles.find(t => !t.pixels);
   if (firstTileWithoutPixels) console.log("first tile without pixels is", firstTileWithoutPixels);
