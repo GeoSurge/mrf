@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const writeImage = require("write-image");
 
 module.exports = function writeImageToDisk(data, filepath) {
@@ -8,5 +9,10 @@ module.exports = function writeImageToDisk(data, filepath) {
   }
   const format = filepath.split(".").slice(-1)[0];
   const { data: buf } = writeImage({ data, format, height, width });
+
+  if (!path.isAbsolute(filepath)) {
+    filepath = path.resolve(process.cwd(), filepath);
+  }
+  console.log("[write-image-to-disk] wrote to " + filepath);
   fs.writeFileSync(filepath, buf);
 };
