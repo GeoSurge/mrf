@@ -1,8 +1,14 @@
 const fs = require("fs");
 const test = require("flug");
-const jpeg = require("jpeg-js");
+const toImageData = require("to-image-data");
+const writeImage = require("write-image");
 const MRF = require("../src/MRF");
+const range = require("../src/utils/range");
 const serve = require("./serve");
+
+const findAndReadImage = require("./utils/find-and-read-image");
+const countInvalidPixels = require("./utils/count-invalid-pixels");
+const writeImageToDisk = require("./utils/write-image-to-disk");
 
 const PORT = 8081;
 
@@ -61,21 +67,9 @@ test("getting multiband tiles", async ({ eq }) => {
   );
   eq(new Set(tile.pixels.map(band => JSON.stringify(band.slice(0, 100)))).size, 4);
 
-  // writing tiles out to PNG file for visual testing
-  tiles.forEach((tile, ti) => {
-    const frameData = Buffer.alloc(512 * 512 * 4);
-    for (let y = 0; y < 512; y++) {
-      for (let x = 0; x < 512; x++) {
-        const i = y * 512 * 4 + x * 4;
-        const pixi = y * 512 + x;
-        frameData[i] = tile.pixels[0][pixi];
-        frameData[i + 1] = tile.pixels[1][pixi];
-        frameData[i + 2] = tile.pixels[2][pixi];
-        frameData[i + 3] = tile.pixels[3][pixi]; // half opaque
-      }
-    }
-    var jpegImageData = jpeg.encode({ width: 512, height: 512, data: frameData }, 85);
-    fs.writeFileSync(`test-${ti}.jpg`, jpegImageData.data);
+  // writing tiles out for manual visual testing
+  tiles.forEach(t => {
+    writeImageToDisk({ data: t.pixels, height: t.height, width: t.width }, `test-multi-x${t.x}-y${t.y}.jpg`);
   });
   passed++;
 });
@@ -89,6 +83,12 @@ test("getting tiles", async ({ eq }) => {
     }
   }
   const tiles = await mrf.getTiles({ debug: false, coords });
+
+  // writing tiles out for manual visual testing
+  tiles.forEach(t => {
+    writeImageToDisk({ data: range(3).map(() => t.pixels), height: t.height, width: t.width }, `test-gray-b${t.b}-x${t.x}-y${t.y}.jpg`);
+  });
+  passed++;
 
   const firstTileWithoutPixels = tiles.find(t => !t.pixels);
   if (firstTileWithoutPixels) console.log("first tile without pixels is", firstTileWithoutPixels);
