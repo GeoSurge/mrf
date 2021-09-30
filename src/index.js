@@ -1,6 +1,6 @@
 const MRF = require("./MRF.js");
-const parseIDX = require("./parseIDX.js");
-const parseMRF = require("./parseMRF.js");
+const parseIDX = require("./core/parse-idx.js");
+const parseMRF = require("./core/parse-mrf.js");
 
 module.exports = {
   parseIDX,
